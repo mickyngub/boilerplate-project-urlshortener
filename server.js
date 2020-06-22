@@ -53,7 +53,7 @@ app.post("/api/shorturl/new", (req, res, done) => {
   console.log(req.body);
 
   const checking = new Promise((resolve, reject) => {
-    var response = URL.exists({"longURL":oldURL});
+    let response = URL.exists({"longURL":oldURL});
     
     if(response) {
       resolve(response);
@@ -62,35 +62,45 @@ app.post("/api/shorturl/new", (req, res, done) => {
     }
   });
   checking.then(result => {
-    var checking2 = result;
+    
     console.log(`Does the website exist in DB? ${result}`);
     
+    if(!result) {
+      if(/https*:\/\/www..*.(com|org).*/.test(oldURL)) {
+        let shortenURL = Math.random().toString(32).substring(2,8);
+        res.json({"original_url":oldURL,
+        "shorten_url": shortenURL});
+
+        let objURL = new URL({longURL: oldURL,
+        shortenURL: shortenURL});
+        console.log(`${objURL.longURL} ${objURL.shortenURL}`);
+
+        objURL.save((err,data) => {
+          if(err) {
+            return console.error(err);
+          }
+        console.log("save successfully");
+        done(null, data);
+        });
+        } else {
+          res.json({"error": "invalid URL"});
+      }
+
+    } else {
+      res.json({"error": "The website already exists"});
+
+    }
 
     });
   
   
   // const checking = await URL.exists({"longURL": oldURL});
   // console.log(checking);
-  if(/https*:\/\/www..*.(com|org).*/.test(oldURL)) {
-    let shortenURL = Math.random().toString(32).substring(2,8);
-    res.json({"original_url":oldURL,
-    "shorten_url": shortenURL});
-
-    let objURL = new URL({longURL: oldURL,
-    shortenURL: shortenURL});
-    console.log(`${objURL.longURL} ${objURL.shortenURL}`);
-
-    objURL.save((err,data) => {
-      if(err) {
-        return console.error(err);
-      }
-      console.log("save successfully");
-      done(null, data);
-    });
-  } else {
-    res.json({"error": "invalid URL"});
-  }
+  
 })
+
+
+
 app.listen(port, function () {
   console.log('Node.js listening ...');
 });
