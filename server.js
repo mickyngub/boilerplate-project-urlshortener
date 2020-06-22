@@ -51,6 +51,26 @@ app.route("/api")
 app.post("/api/shorturl/new", (req, res, done) => {
   let {url : oldURL} = req.body;
   console.log(req.body);
+
+  const checking = new Promise((resolve, reject) => {
+    var response = URL.exists({"longURL":oldURL});
+    
+    if(response) {
+      resolve(response);
+    } else {
+      reject("Problem has occurred");
+    }
+  });
+  checking.then(result => {
+    var checking2 = result;
+    console.log(`Does the website exist in DB? ${result}`);
+    
+
+    });
+  
+  
+  // const checking = await URL.exists({"longURL": oldURL});
+  // console.log(checking);
   if(/https*:\/\/www..*.(com|org).*/.test(oldURL)) {
     let shortenURL = Math.random().toString(32).substring(2,8);
     res.json({"original_url":oldURL,
