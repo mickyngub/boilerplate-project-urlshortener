@@ -5,13 +5,14 @@ var mongo = require('mongodb');
 var mongoose = require('mongoose');
 let bodyParser = require('body-parser');
 var cors = require('cors');
+let dns = require('dns');
 
 var app = express();
 
 // Basic Configuration 
 var port = process.env.PORT || 3000;
 
-mongoose.connect(process.env.MONGO_URI);
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
 
 let db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error'));
@@ -54,7 +55,7 @@ app.post("/api/shorturl/new", (req, res, done) => {
 
   const checking = new Promise((resolve, reject) => {
     let response = URL.exists({"longURL":oldURL});
-    
+    // let checkURL = dns.lookup(oldURL, (err,address,family) => console.log(address));
     if(response) {
       resolve(response);
     } else {
@@ -97,9 +98,16 @@ app.post("/api/shorturl/new", (req, res, done) => {
   // const checking = await URL.exists({"longURL": oldURL});
   // console.log(checking);
   
-})
+});
 
-
+app.get("/api/shorturl/:newURL", (req, res, done) => {
+  URL.findOne({"shortenURL": req.params.newURL}, (err, data) => {
+    if(err) return console.error(err);
+    console.log(data.longURL);
+    res.redirect(data.longURL);
+    done(null, data);
+  });
+});
 
 app.listen(port, function () {
   console.log('Node.js listening ...');
